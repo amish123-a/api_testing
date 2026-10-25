@@ -123,4 +123,4 @@ def test_pet_crud():
 
 if __name__ == "__main__":
     test_pet_crud()
-    print("\n\n🎉 Все проверки пройдены успешно!")
+    print(" Все проверки пройдены успешно!")
