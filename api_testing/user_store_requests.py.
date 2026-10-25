@@ -1,0 +1,126 @@
+import requests
+import json
+import time
+
+class PetAPI:
+
+
+    BASE_URL = "https://petstore.swagger.io/v2"
+
+    def __init__(self):
+        self.session = requests.Session()
+        self.session.headers.update({
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+        })
+
+    def create_pet(self, pet_data: dict) -> requests.Response:
+
+        url = f"{self.BASE_URL}/pet"
+        print(f"\n>>> POST {url}")
+        print(f"    Body: {json.dumps(pet_data, ensure_ascii=False)}")
+        resp = self.session.post(url, json=pet_data)
+        print(f"<<< Status: {resp.status_code}")
+        print(f"    Response: {json.dumps(resp.json(), ensure_ascii=False) if resp.content else '(empty)'}")
+        return resp
+
+    def get_pet_by_id(self, pet_id: int) -> requests.Response:
+
+        url = f"{self.BASE_URL}/pet/{pet_id}"
+        print(f"\n>>> GET {url}")
+        resp = self.session.get(url)
+        print(f"<<< Status: {resp.status_code}")
+        print(f"    Response: {json.dumps(resp.json(), ensure_ascii=False) if resp.content else '(empty)'}")
+        return resp
+
+    def update_pet(self, pet_data: dict) -> requests.Response:
+
+        url = f"{self.BASE_URL}/pet"
+        print(f"\n>>> PUT {url}")
+        print(f"    Body: {json.dumps(pet_data, ensure_ascii=False)}")
+        resp = self.session.put(url, json=pet_data)
+        print(f"<<< Status: {resp.status_code}")
+        print(f"    Response: {json.dumps(resp.json(), ensure_ascii=False) if resp.content else '(empty)'}")
+        return resp
+
+    def delete_pet(self, pet_id: int) -> requests.Response:
+
+        url = f"{self.BASE_URL}/pet/{pet_id}"
+        print(f"\n>>> DELETE {url}")
+        resp = self.session.delete(url)
+        print(f"<<< Status: {resp.status_code}")
+        print(f"    Response: {json.dumps(resp.json(), ensure_ascii=False) if resp.content else '(empty)'}")
+        return resp
+
+
+
+
+def test_pet_crud():
+    """Полный цикл CRUD с проверками статуса и данных."""
+    api = PetAPI()
+    pet_id = int(time.time() * 1000)  # уникальный ID
+
+
+    pet_data = {
+        "id": pet_id,
+        "name": "TestDog",
+        "status": "available",
+        "photoUrls": ["http://example.com/dog.jpg"]
+    }
+    resp = api.create_pet(pet_data)
+
+    # Проверки: статус 200 и наличие нужных данных
+    assert resp.status_code == 200, f"Ожидался 200, получен {resp.status_code}"
+    data = resp.json()
+    assert "id" in data, "В ответе отсутствует поле 'id'"
+    assert data["id"] == pet_id, f"ID не совпадает: {data.get('id')} != {pet_id}"
+    assert "name" in data, "В ответе отсутствует поле 'name'"
+    assert data["name"] == "TestDog", f"Имя не совпадает: {data.get('name')}"
+    print("\n✓ Создание: статус 200, данные корректны")
+
+    resp = api.get_pet_by_id(pet_id)
+
+    assert resp.status_code == 200, f"Ожидался 200, получен {resp.status_code}"
+    data = resp.json()
+    assert "id" in data, "В ответе отсутствует поле 'id'"
+    assert data["id"] == pet_id, f"ID не совпадает: {data.get('id')} != {pet_id}"
+    assert "name" in data, "В ответе отсутствует поле 'name'"
+    assert data["name"] == "TestDog", f"Имя не совпадает: {data.get('name')}"
+    print("\n✓ Получение по ID: статус 200, данные корректны")
+
+
+    updated_data = {
+        "id": pet_id,
+        "name": "UpdatedDog",
+        "status": "sold"
+    }
+    resp = api.update_pet(updated_data)
+
+    assert resp.status_code == 200, f"Ожидался 200, получен {resp.status_code}"
+    data = resp.json()
+    assert "id" in data, "В ответе отсутствует поле 'id'"
+    assert data["id"] == pet_id, f"ID не совпадает: {data.get('id')} != {pet_id}"
+    assert "name" in data, "В ответе отсутствует поле 'name'"
+    assert data["name"] == "UpdatedDog", f"Имя не обновилось: {data.get('name')}"
+    assert "status" in data, "В ответе отсутствует поле 'status'"
+    assert data["status"] == "sold", f"Статус не обновился: {data.get('status')}"
+    print("\n✓ Обновление: статус 200, данные корректны")
+
+  
+    resp = api.delete_pet(pet_id)
+
+    assert resp.status_code == 200, f"Ожидался 200, получен {resp.status_code}"
+    data = resp.json()
+    assert "message" in data, "В ответе отсутствует поле 'message'"
+    assert str(pet_id) in data["message"], f"ID не упоминается в сообщении: {data.get('message')}"
+    print("\n✓ Удаление: статус 200, данные корректны")
+
+
+    resp = api.get_pet_by_id(pet_id)
+    assert resp.status_code == 404, f"Ожидался 404 после удаления, получен {resp.status_code}"
+    print("\n✓ Проверка удаления: статус 404 (питомец не найден)")
+
+
+if __name__ == "__main__":
+    test_pet_crud()
+    print("\n\n🎉 Все проверки пройдены успешно!")
